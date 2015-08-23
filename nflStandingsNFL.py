@@ -5,7 +5,7 @@ import os
 import re
 import urllib
 
-os.chdir('/home/bdbozyk/nflData/')
+os.chdir('/users/George/nflData/')
 
 def standings(year,seasonType):
     if type(year) is not str:
@@ -72,53 +72,5 @@ for year in xrange(2006,2015):
         regDf = pandas.concat([regDf,standings(year,'REG')])
     print str(year)
     
-regDf.to_csv('nflStandingsRegNFL.csv')
-preDf.to_csv('nflStandingsPreNFL.csv')    
-
-#regDf[['W','L','T','NET PTS']] = regDf[['W','L','T','NET PTS']].astype(int)
-#preDf[['W','L','T','NET PTS']] = preDf[['W','L','T','NET PTS']].astype(int)
-
-
-#regDf['AVG REG NEG PTS GAME'] = regDf['NET PTS']/(regDf['W']+regDf['L']+regDf['T'])
-#preDf['AVG PRE NEG PTS GAME'] = preDf['NET PTS']/(preDf['W']+preDf['L']+preDf['T'])
-    
-    
-#import numpy as np
-#prePts = preDf[['YEAR','TEAM','AVG PRE NEG PTS GAME']]
-#regPts = regDf[['YEAR','TEAM','AVG REG NEG PTS GAME','SEASON OUTCOME']]
-#regPts['PLAYOFFS'] = np.where(regPts['SEASON OUTCOME']=='NONE',tuple((31/270.,119/270.,180/270.)),tuple(((255/270.,127/270.,14/270.))))
-
-#tabColors = []
-#colors = regPts[['PLAYOFFS']].get_values()
-#for color in colors:
-#    if color == 0:
-#        tabColors.append( (31/270.,119/270.,180/270.))
-#    else:
-#        tabColors.append((255/270.,127/270.,14/270.))
-
-#pts = pandas.merge(left = prePts, right = regPts, on = ['YEAR','TEAM'])
-#pts.columns = ['YEAR','TEAM','AVG NET PRE PTS GAME','AVG NET REG PTS GAME','SEASON OUTCOME','PLAYOFFS']
-
-#import matplotlib.pyplot as plt
-#plt.style.use('ggplot')
- 
-#x = pts[['AVG NET PRE PTS GAME']]
-#y = pts[['AVG NET REG PTS GAME']]
-#color = pts[['PLAYOFFS']].get_values()
-
-
-#plt.scatter(x, y, s = 50,c=[(31,119,180),(255,127,14)])
-
-#tableau10 = [
-#[31,119,180],
-#[255,127,14],
-#[44,160,44],
-#[214,39,40],
-#[148,103,189],
-#[140,86,75],
-#[227,119,194],
-#[127,127,127],
-#[188,189,34],
-#[23,190,207]
-
-#]
+regDf.to_csv('nflStandingsRegNFL.csv',index=False)
+preDf.to_csv('nflStandingsPreNFL.csv',index=False)    

@@ -6,8 +6,8 @@ for i in range(len(tableau10Blind)):
   r,g,b = tableau10Blind[i]
   tableau10Blind[i] = (r/255.,g/255.,b/255.)
 
-preLoc = '/home/bdbozyk/nflData/nflStandingsPreNFL.csv'
-regLoc = '/home/bdbozyk/nflData/nflStandingsRegNFL.csv'
+preLoc = '/Users/George/nflData/nflStandingsPreNFL.csv'
+regLoc = '/Users/George/nflData/nflStandingsRegNFL.csv'
 
 
 pre = pandas.read_csv(preLoc)
@@ -61,24 +61,31 @@ for i in range(len(colors)):
         superBowl_x.append(x[i])
         superBowl_y.append(y[i])
 
-
-plt.scatter(x,y,s=size,c=color,edgecolors='grey')
-
-plt.style.use('fivethirtyeight')
-plt.scatter(noPlayoffs_x,noPlayoffs_y,s=75,c=tableau10Blind[0])
-plt.scatter(playoffs_x,playoffs_y,s=75,c=tableau10Blind[2])
-plt.scatter(superBowl_x,superBowl_y,s=75,c=tableau10Blind[1])
-
+#plot 1
+plt.style.use('ggplot')
+plt.scatter(noPlayoffs_x,noPlayoffs_y,s=40,c=tableau10Blind[0],edgecolors='white')
+plt.scatter(playoffs_x,playoffs_y,s=40,c=tableau10Blind[1],edgecolors='white')
+plt.scatter(superBowl_x,superBowl_y,s=40,c='black',edgecolors='white')
+plt.xlabel('Preseason')
+plt.ylabel('Regular Season')
+plt.title('Average Net Points Per Game')
+plt.legend(['No Playoffs','Playoffs','Won Superbowl'],loc=2,frameon=None,framealpha=0)
 plt.show()
 
 
 
 
 
+base2 = base[['SEASON OUTCOME_y','AVG NET PTS GAME PRE']].sort('AVG NET PTS GAME PRE')
+base2['PLAYOFF'] = numpy.where(base2['SEASON OUTCOME_y']=='NONE',0,1)
+base2['DUMMY'] = 1
+cumsum = base2.cumsum()
+
+cumsum['PCT'] = cumsum['PLAYOFF']/cumsum['DUMMY']
 
 
-
-
+base3 = pandas.merge(left=base2.reset_index(),right=cumsum.reset_index(),on='index').sort('AVG NET PTS GAME PRE_y')
+plt.plot(cumsum['PCT'])
 
 
 
