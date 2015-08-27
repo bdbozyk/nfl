@@ -23,7 +23,7 @@ for line in html:
         
         
         
-gameId = '400554232'
+gameId = '400554213'
 url = 'http://scores.espn.go.com/nfl/boxscore?gameId='+gameId
 html = urllib.urlopen(url).read()
 work = re.search('<!-- SETTINGS: boxscore.*?<!-- begin sp links -->',html,re.DOTALL).group()
@@ -105,13 +105,13 @@ scoringSummary.to_csv(os.getcwd()+'/scoringSummary/scoringSummary_'+gameId+'.csv
 ## SCORING SUMMARY END
 #------------------------------------------------------------------------------
 
-
+chipper = re.search(r'Team Stat Comparison.*',work,re.DOTALL).group()
 
 #------------------------------------------------------------------------------
 ## TEAM STAT COMPARISON START
 #------------------------------------------------------------------------------
-teamStatComparison = re.search(r'Team Stat Comparison.*?Helvetica,Arial,sans-serif',work).group()
-
+teamStatComparison = re.search(r'Team Stat Comparison.*?Helvetica,Arial,sans-serif',chipper).group()
+teamStatComparisonLen = len(teamStatComparison)
 
 
 teamsWork = re.findall(r'"float:right;">.*?</div>',teamStatComparison)
@@ -166,16 +166,120 @@ rows = []
 for i in xrange(2):
     rows.append([gameId,teams[i],firstDowns[i],passingFirstDowns[i],rushingFirstDowns[i],penaltyFirstDowns[i],thirdDowns[i][0],thirdDowns[i][1],fourthDowns[i][0],fourthDowns[i][1],totalPlays[i],totalYards[i],yardsPerPlay[i],totalDrives[i],passingYards[i],passing[i][0],passing[i][1],yardsPerPass[i],interceptions[i],sacksYardsLost[i][0],sacksYardsLost[i][1],rushingYards[i],rushingAttempts[i],yardsPerRush[i],redZone[i][0],redZone[i][1],penalties[i][0],penalties[i][1],turnovers[i],fumblesLost[i],defensiveSpecialTeamsTDs[i],timeOfPossession[i]])
 
-
 teamStatComparison = pandas.DataFrame(rows).reset_index()
-teamStatComparison.columns = ['HOME_FG','GAME_ID','TEAM','FIRST_DOWNS','PASSING_FIRST_DOWNS','RUSHING_FIRST_DOWNS','PENALTY_FIRST_DOWNS','THIRD_DOWNS_ATTEMPTED','THIRD_DOWNS_CONVERTED','FOURTH_DOWNS_ATTEMPTED','FOURTH_DOWNS_CONVERTED','TOTAL_PLAYS','TOTAL_YARDS','YARDS_PER_PLAY','TOTAL_DRIVES','PASSING_YARDS','PASSES_ATTEMPTED','PASSES_COMPLETED','YARDS_PER_PASS','INTERCEPTIONS_THROWN','SACKS','SACKS_YARDS_LOST','RUSHING_YARDS','RUSHES_ATTEMPTED','YARDS_PER_RUSH','RED_ZONE_SCORES','RED_ZONE_ATTEMPTED','PENALTIES','PENALTY_YARDS','TURNOVERS','FUMBLES_LOST','DEF_ST_TDS','TIME_OF_POSSESSION']
+teamStatComparison.columns = ['HOME_FG','GAME_ID','TEAM_ABBREV','FIRST_DOWNS','PASSING_FIRST_DOWNS','RUSHING_FIRST_DOWNS','PENALTY_FIRST_DOWNS','THIRD_DOWNS_ATTEMPTED','THIRD_DOWNS_CONVERTED','FOURTH_DOWNS_ATTEMPTED','FOURTH_DOWNS_CONVERTED','TOTAL_PLAYS','TOTAL_YARDS','YARDS_PER_PLAY','TOTAL_DRIVES','PASSING_YARDS','PASSES_ATTEMPTED','PASSES_COMPLETED','YARDS_PER_PASS','INTERCEPTIONS_THROWN','SACKS','SACKS_YARDS_LOST','RUSHING_YARDS','RUSHES_ATTEMPTED','YARDS_PER_RUSH','RED_ZONE_SCORES','RED_ZONE_ATTEMPTED','PENALTIES','PENALTY_YARDS','TURNOVERS','FUMBLES_LOST','DEF_ST_TDS','TIME_OF_POSSESSION']
 teamStatComparison.to_csv(os.getcwd()+'/teamStatComparison/teamStatComparison_'+gameId+'.csv',index=False)
 
+#------------------------------------------------------------------------------
+## TEAM STAT COMPARISON END
+#------------------------------------------------------------------------------
 
+#------------------------------------------------------------------------------
+## AWAY PASS START
+#------------------------------------------------------------------------------
 
+awayPassWork = chipper[teamStatComparisonLen:]
+awayPass = re.search(r'.*?Helvetica,Arial',awayPassWork,re.DOTALL).group().upper()
+awayPassLen = len(awayPass)
 
+statsWork = re.findall('>.*?<',awayPass,re.DOTALL)
 
+stats1 = []
+for stat in statsWork:
+    tempStat = stat.translate(None,'><')
+    if tempStat not in ['','&NBSP;']:
+        meh = re.sub(' -- ','NA',tempStat)
+        stats1.append(meh)
+        
+del(stats1[:9])
+del(stats1[-9:])
+stats = []
+for stat in stats1:
+    if '/' in stat:
+        stats = stats+stat.split('/')
+    elif '-' in stat:
+        stats = stats+stat.split('-')
+    else:
+        stats.append(stat)
+        
+rows = []
+for i in xrange(int(len(stats)/11.)):
+    rows.append(stats[i*11:(i+1)*11])
+        
+statsFrame = pandas.DataFrame(rows)
+statsFrame.columns = ['PLAYER','COMP','ATT','YDS','YDS_PER_PASS','TDS','INT','SACKS','SACKS_YDS','QBR','RTG']        
 
+rows = []
+playerWork = re.findall('ID/.*?</TD>',awayPass,re.DOTALL)
+for player in playerWork:
+    rows.append([gameId,0]+re.sub('">','/',player[3:-9]).split('/'))
+playerFrame = pandas.DataFrame(rows)
+playerFrame.columns = ['GAME_ID','HOME_FG','PLAYER_ID','PLAYER_HYPHEN','PLAYER']
+
+awayPassing = pandas.merge(left=playerFrame,right=statsFrame,on='PLAYER')
+
+#------------------------------------------------------------------------------
+## AWAY PASS END
+#------------------------------------------------------------------------------
+
+#------------------------------------------------------------------------------
+## HOME PASS START
+#------------------------------------------------------------------------------
+
+homePassWork = chipper[teamStatComparisonLen+awayPassLen:]
+homePass = re.search(r'.*?Helvetica,Arial',homePassWork,re.DOTALL).group().upper()
+homePassLen = len(homePass)
+
+statsWork = re.findall('>.*?<',homePass,re.DOTALL)
+
+stats1 = []
+for stat in statsWork:
+    tempStat = stat.translate(None,'><')
+    if tempStat not in ['','&NBSP;']:
+        meh = re.sub(' -- ','NA',tempStat)
+        stats1.append(meh)
+        
+del(stats1[:9])
+del(stats1[-9:])
+stats = []
+for stat in stats1:
+    if '/' in stat:
+        stats = stats+stat.split('/')
+    elif '-' in stat:
+        stats = stats+stat.split('-')
+    else:
+        stats.append(stat)
+        
+rows = []
+for i in xrange(int(len(stats)/11.)):
+    rows.append(stats[i*11:(i+1)*11])
+        
+statsFrame = pandas.DataFrame(rows)
+statsFrame.columns = ['PLAYER','COMP','ATT','YDS','YDS_PER_PASS','TDS','INT','SACKS','SACKS_YDS','QBR','RTG']        
+
+rows = []
+playerWork = re.findall('ID/.*?</TD>',homePass,re.DOTALL)
+for player in playerWork:
+    rows.append([gameId,1]+re.sub('">','/',player[3:-9]).split('/'))
+playerFrame = pandas.DataFrame(rows)
+playerFrame.columns = ['GAME_ID','HOME_FG','PLAYER_ID','PLAYER_HYPHEN','PLAYER']
+
+homePassing = pandas.merge(left=playerFrame,right=statsFrame,on='PLAYER')
+
+#------------------------------------------------------------------------------
+## HOME PASS END
+#------------------------------------------------------------------------------
+
+#------------------------------------------------------------------------------
+## PASSING START
+#------------------------------------------------------------------------------
+
+passing = pandas.merge(left=pandas.concat([awayPassing,homePassing]),right=teamStatComparison[['HOME_FG','TEAM_ABBREV']],on='HOME_FG')
+passing.to_csv(os.getcwd()+'/passing/passing_'+gameId+'.csv',index=False)
+
+#------------------------------------------------------------------------------
+## PASSING END
+#------------------------------------------------------------------------------
 
 
 
