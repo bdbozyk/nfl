@@ -282,5 +282,152 @@ passing.to_csv(os.getcwd()+'/passing/passing_'+gameId+'.csv',index=False)
 #------------------------------------------------------------------------------
 
 
+#------------------------------------------------------------------------------
+## AWAY RUSH START
+#------------------------------------------------------------------------------
+awayRushWork = chipper[teamStatComparisonLen+awayPassLen+homePassLen:]
+awayRush = re.search(r'.*?Helvetica,Arial',awayRushWork,re.DOTALL).group().upper()
+awayRushLen = len(awayRush)
 
+
+statsWork = re.findall('>.*?<',awayRush,re.DOTALL)
+
+stats1 = []
+for stat in statsWork:
+    tempStat = stat.translate(None,'><')
+    if tempStat not in ['','&NBSP;']:
+        meh = re.sub(' -- ','NA',tempStat)
+        stats1.append(meh)
+        
+del(stats1[:6])
+del(stats1[-6:])
+stats = []
+for stat in stats1:
+    if '/' in stat:
+        stats = stats+stat.split('/')
+    else:
+        stats.append(stat)
+        
+rows = []
+for i in xrange(int(len(stats)/6.)):
+    rows.append(stats[i*6:(i+1)*6])
+        
+statsFrame = pandas.DataFrame(rows)
+statsFrame.columns = ['PLAYER','CARRIES','YDS','YDS_PER_CARRY','TDS','LONG']        
+
+rows = []
+playerWork = re.findall('ID/.*?</TD>',awayRush,re.DOTALL)
+for player in playerWork:
+    rows.append([gameId,0]+re.sub('">','/',player[3:-9]).split('/'))
+playerFrame = pandas.DataFrame(rows)
+playerFrame.columns = ['GAME_ID','HOME_FG','PLAYER_ID','PLAYER_HYPHEN','PLAYER']
+
+awayRushing = pandas.merge(left=playerFrame,right=statsFrame,on='PLAYER')
+#------------------------------------------------------------------------------
+## AWAY RUSH END //////////////////////////////////////////////////////////////
+#------------------------------------------------------------------------------
+
+
+#------------------------------------------------------------------------------
+## HOME RUSH START
+#------------------------------------------------------------------------------
+homeRushWork = chipper[teamStatComparisonLen+awayPassLen+homePassLen+awayRushLen:]
+homeRush = re.search(r'.*?Helvetica,Arial',homeRushWork,re.DOTALL).group().upper()
+homeRushLen = len(homeRush)
+
+
+statsWork = re.findall('>.*?<',homeRush,re.DOTALL)
+
+stats1 = []
+for stat in statsWork:
+    tempStat = stat.translate(None,'><')
+    if tempStat not in ['','&NBSP;']:
+        meh = re.sub(' -- ','NA',tempStat)
+        stats1.append(meh)
+        
+del(stats1[:6])
+del(stats1[-6:])
+stats = []
+for stat in stats1:
+    if '/' in stat:
+        stats = stats+stat.split('/')
+    else:
+        stats.append(stat)
+        
+rows = []
+for i in xrange(int(len(stats)/6.)):
+    rows.append(stats[i*6:(i+1)*6])
+        
+statsFrame = pandas.DataFrame(rows)
+statsFrame.columns = ['PLAYER','CARRIES','YDS','YDS_PER_CARRY','TDS','LONG']        
+
+rows = []
+playerWork = re.findall('ID/.*?</TD>',homeRush,re.DOTALL)
+for player in playerWork:
+    rows.append([gameId,1]+re.sub('">','/',player[3:-9]).split('/'))
+playerFrame = pandas.DataFrame(rows)
+playerFrame.columns = ['GAME_ID','HOME_FG','PLAYER_ID','PLAYER_HYPHEN','PLAYER']
+
+homeRushing = pandas.merge(left=playerFrame,right=statsFrame,on='PLAYER')
+#------------------------------------------------------------------------------
+## HOME RUSH END //////////////////////////////////////////////////////////////
+#------------------------------------------------------------------------------
+
+
+#------------------------------------------------------------------------------
+## RUSHING START
+#------------------------------------------------------------------------------
+
+rushing = pandas.merge(left=pandas.concat([awayRushing,homeRushing]),right=teamStatComparison[['HOME_FG','TEAM_ABBREV']],on='HOME_FG')
+passing.to_csv(os.getcwd()+'/rushing/rushing_'+gameId+'.csv',index=False)
+
+#------------------------------------------------------------------------------
+## RUSHING END %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+#------------------------------------------------------------------------------
+
+
+#------------------------------------------------------------------------------
+## AWAY RECEIVING START
+#------------------------------------------------------------------------------
+awayReceivingWork = chipper[teamStatComparisonLen+awayPassLen+homePassLen+awayRushLen+homeRushLen:]
+awayReceiving = re.search(r'.*?Helvetica,Arial',awayReceivingWork,re.DOTALL).group().upper()
+awayReceivingLen = len(awayReceiving)
+
+
+statsWork = re.findall('>.*?<',awayReceiving,re.DOTALL)
+
+stats1 = []
+for stat in statsWork:
+    tempStat = stat.translate(None,'><')
+    if tempStat not in ['','&NBSP;']:
+        meh = re.sub(' -- ','NA',tempStat)
+        stats1.append(meh)
+        
+del(stats1[:7])
+del(stats1[-7:])
+stats = []
+for stat in stats1:
+    if '/' in stat:
+        stats = stats+stat.split('/')
+    else:
+        stats.append(stat)
+        
+rows = []
+for i in xrange(int(len(stats)/7.)):
+    rows.append(stats[i*7:(i+1)*7])
+        
+statsFrame = pandas.DataFrame(rows)
+statsFrame.columns = ['PLAYER','CARRIES','YDS','YDS_PER_CARRY','TDS','LONG']        
+
+rows = []
+playerWork = re.findall('ID/.*?</TD>',homeRush,re.DOTALL)
+for player in playerWork:
+    rows.append([gameId,1]+re.sub('">','/',player[3:-9]).split('/'))
+playerFrame = pandas.DataFrame(rows)
+playerFrame.columns = ['GAME_ID','HOME_FG','PLAYER_ID','PLAYER_HYPHEN','PLAYER']
+
+homeRushing = pandas.merge(left=playerFrame,right=statsFrame,on='PLAYER')
+#------------------------------------------------------------------------------
+## HOME RUSH END //////////////////////////////////////////////////////////////
+#------------------------------------------------------------------------------
 
