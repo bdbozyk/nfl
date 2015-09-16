@@ -3,13 +3,13 @@ import re
 import pandas
 import os
 
-os.chdir('/home/brett/espnNFL/')
+os.chdir('/Users/KarliBozyk/nfl/')
 os.getcwd()
 
-gameId = '400554213'
+gameId = '400554301'
 
 year = 2014
-gameIds = pandas.read_csv(os.getcwd()+'/gameSummary/gameSummary_'+str(year)+'.csv')['GAME_ID'].drop_duplicates().get_values()
+gameIds = pandas.read_csv(os.getcwd()+'/gameSummary_'+str(year)+'.csv')['GAME_ID'].drop_duplicates().get_values()
 
 
 
@@ -31,19 +31,18 @@ def StatSummary(gameId):
         if temp not in ['','Overview']:
             teams.append(temp.upper())
     teamFrame = pandas.DataFrame([[gameId,teams[0],teams[1],0],[gameId,teams[2],teams[3],1]])
-    teamFrame.columns = ['GAME_ID','TEAM','TEAM_ABBREV','HOME_FG']
+    teamFrame.columns = ['gameId','team','teamAbbrev','homeFg']
     
     teamFrame2 = teamFrame[:]
-    teamFrame2['SOURCE'] = url
-    teamFrame2.to_csv(os.getcwd()+'/boxScoreMeta/boxScoreMeta_'+gameId+'.csv',index=False)
+    teamFrame2['source'] = url
+    teamFrame2.to_csv(os.getcwd()+'/boxScoreMeta_'+gameId+'.csv',index=False)
     
     print '1. Team Boxscore Metadata complete...'
     
     ###-------------------------------------------------------------------------###
     ###   START OF AWAY PASSING   ----------------------------------------------###
-    ###-------------------------------------------------------------------------###
-    frameColumns = ['PLAYER','COMPS','ATTS','YDS','AVG','TD','INT','SACKS','SACKS_YDS_LOST','QBR','RTG']
-    
+    ###-------------------------------------------------------------------------###    
+    header = ['player','c','att','yds','avg','td','int','sacks','sacksYds']    
     string = strings[1]
     junk = re.findall(r'>.*?<',string)
     junk2 = []
@@ -51,15 +50,22 @@ def StatSummary(gameId):
         temp = thing.translate(None,'><')
         if temp != '':
             junk2.append(temp.upper())
-    del(junk2[:9],junk2[-9:])
+    colNum = 7
+    if 'QBR' in junk2:
+        colNum += 1
+        header.append('qbr')
+    if 'RTG' in junk2:
+        colNum += 1
+        header.append('rtg')    
+    del(junk2[:colNum],junk2[-colNum:])
     junk3 = []
     counter = 1
     for thing in junk2:
-        if (counter - 2)%9 == 0:
+        if (counter - 2)%colNum == 0:
             temp = thing.split('/')
             junk3.append(temp[0])
             junk3.append(temp[1])
-        elif (counter - 7)%9 == 0:
+        elif (counter - 7)%colNum == 0:
             temp = thing.split('-')
             junk3.append(temp[0])
             junk3.append(temp[1])
@@ -67,23 +73,24 @@ def StatSummary(gameId):
             junk3.append(thing)
         counter += 1
     rows = []
-    for i in xrange(int(len(junk3)/11.)):
-        rows.append(junk3[i*11:(i+1)*11])
+    for i in xrange(int(len(junk3)/(colNum+2))):
+        rows.append(junk3[i*(colNum+2):(i+1)*(colNum+2)])
     frame = pandas.DataFrame(rows)
-    frame.columns = frameColumns
+    frame.columns = header
     junk4 = re.findall(r'id/.*?<',string)
     rows = []
     for thing in junk4:
         temp = thing.split('"')
         rows.append([re.sub('[^0-9]','',temp[0]),temp[1].translate(None,'><').upper()])
     playerFrame = pandas.DataFrame(rows)
-    playerFrame.columns = ['PLAYER_ID','PLAYER']
-    playerFrame['HOME_FG'] = 0
-    awayFrame = pandas.merge(left = playerFrame, right = frame, on = 'PLAYER')
+    playerFrame.columns = ['playerId','player']
+    playerFrame['homeFg'] = 0
+    awayFrame = pandas.merge(left = playerFrame, right = frame, on = 'player')
     
     ###-------------------------------------------------------------------------###
     ###   START OF HOME PASSING   ----------------------------------------------###
     ###-------------------------------------------------------------------------###
+    header = ['player','c','att','yds','avg','td','int','sacks','sacksYds']    
     string = strings[2]
     junk = re.findall(r'>.*?<',string)
     junk2 = []
@@ -91,15 +98,22 @@ def StatSummary(gameId):
         temp = thing.translate(None,'><')
         if temp != '':
             junk2.append(temp.upper())
-    del(junk2[:9],junk2[-9:])
+    colNum = 7
+    if 'QBR' in junk2:
+        colNum += 1
+        header.append('qbr')
+    if 'RTG' in junk2:
+        colNum += 1
+        header.append('rtg')    
+    del(junk2[:colNum],junk2[-colNum:])
     junk3 = []
     counter = 1
     for thing in junk2:
-        if (counter - 2)%9 == 0:
+        if (counter - 2)%colNum == 0:
             temp = thing.split('/')
             junk3.append(temp[0])
             junk3.append(temp[1])
-        elif (counter - 7)%9 == 0:
+        elif (counter - 7)%colNum == 0:
             temp = thing.split('-')
             junk3.append(temp[0])
             junk3.append(temp[1])
@@ -107,26 +121,26 @@ def StatSummary(gameId):
             junk3.append(thing)
         counter += 1
     rows = []
-    for i in xrange(int(len(junk3)/11.)):
-        rows.append(junk3[i*11:(i+1)*11])
+    for i in xrange(int(len(junk3)/(colNum+2))):
+        rows.append(junk3[i*(colNum+2):(i+1)*(colNum+2)])
     frame = pandas.DataFrame(rows)
-    frame.columns = frameColumns
+    frame.columns = header
     junk4 = re.findall(r'id/.*?<',string)
     rows = []
     for thing in junk4:
         temp = thing.split('"')
         rows.append([re.sub('[^0-9]','',temp[0]),temp[1].translate(None,'><').upper()])
     playerFrame = pandas.DataFrame(rows)
-    playerFrame.columns = ['PLAYER_ID','PLAYER']
-    playerFrame['HOME_FG'] = 1
-    homeFrame = pandas.merge(left = playerFrame, right = frame, on = 'PLAYER')
+    playerFrame.columns = ['playerId','player']
+    playerFrame['homeFg'] = 1
+    homeFrame = pandas.merge(left = playerFrame, right = frame, on = 'player')
     
     ###-------------------------------------------------------------------------###
     ###   COMBINE HOME AND AWAY PASSING   --------------------------------------###
     ###-------------------------------------------------------------------------###
     passing = pandas.concat([awayFrame,homeFrame])
-    passing = pandas.merge(left = teamFrame,right = passing, on = 'HOME_FG')
-    passing.to_csv(os.getcwd()+'/passing/passing_'+gameId+'.csv',index=False)
+    passing = pandas.merge(left = teamFrame,right = passing, on = 'homeFg')
+    passing.to_csv(os.getcwd()+'/passing_'+gameId+'.csv',index=False)
     
     print '2. Passing is complete...'
     
